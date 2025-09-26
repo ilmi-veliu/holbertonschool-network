@@ -1,0 +1,102 @@
+# Create a simple network flow diagram as a PNG using Pillow.
+from PIL import Image, ImageDraw, ImageFont
+
+W, H = 1600, 1000
+img = Image.new("RGB", (W, H), "white")
+draw = ImageDraw.Draw(img)
+
+# Try to load a default font
+try:
+    font = ImageFont.truetype("DejaVuSans.ttf", 24)
+    font_small = ImageFont.truetype("DejaVuSans.ttf", 20)
+except:
+    font = ImageFont.load_default()
+    font_small = ImageFont.load_default()
+
+# Helper to draw a labeled box
+def box(x, y, w, h, text):
+    draw.rectangle([x, y, x+w, y+h], outline="black", width=3)
+    # text wrap naive
+    draw.text((x+10, y+10), text, font=font, fill="black")
+
+# Helper to draw arrow
+def arrow(x1, y1, x2, y2, text=None):
+    draw.line([x1, y1, x2, y2], fill="black", width=3)
+    # arrow head
+    ah = 12
+    if x2==x1 and y2==y1:
+        return
+    import math
+    ang = math.atan2(y2-y1, x2-x1)
+    p1 = (x2 - ah*math.cos(ang - math.pi/6), y2 - ah*math.sin(ang - math.pi/6))
+    p2 = (x2 - ah*math.cos(ang + math.pi/6), y2 - ah*math.sin(ang + math.pi/6))
+    draw.polygon([ (x2,y2), p1, p2 ], fill="black")
+    if text:
+        tx = (x1+x2)//2
+        ty = (y1+y2)//2 - 20
+        draw.text((tx, ty), text, font=font_small, fill="black")
+
+# Layout coordinates
+x_user, y_user = 50, 60
+box_user = (300,120)
+
+x_dns, y_dns = 500, 60
+box_dns = (300,120)
+
+x_fw, y_fw = 900, 60
+box_fw = (300,120)
+
+x_lb, y_lb = 1250, 60
+box_lb = (300,120)
+
+x_web, y_web = 300, 300
+box_web = (360,120)
+
+x_app, y_app = 740, 300
+box_app = (360,120)
+
+x_db, y_db = 1180, 300
+box_db = (360,120)
+
+# Draw boxes
+box(x_user, y_user, *box_user, "User Browser\nhttps://www.google.com")
+box(x_dns, y_dns, *box_dns, "DNS Resolution\nResolver → Root → .com → Google Auth DNS")
+box(x_fw, y_fw, *box_fw, "Network Firewall(s)\nAllow TCP 443; block others")
+box(x_lb, y_lb, *box_lb, "Load Balancer (VIP)\nChooses backend (RR/LeastConn)\nTLS Termination or Passthrough")
+
+box(x_web, y_web, *box_web, "Web Server (e.g., GFE/Nginx)\nServes static, reverse-proxy")
+box(x_app, y_app, *box_app, "Application Server\nGenerates dynamic page")
+box(x_db, y_db, *box_db, "Database\nQuery indexes/data")
+
+# Arrows
+arrow(x_user+box_user[0], y_user+box_user[1]//2, x_dns, y_dns+box_dns[1]//2, "DNS query")
+arrow(x_dns+box_dns[0], y_dns+box_dns[1]//2, x_fw, y_fw+box_fw[1]//2, "IP acquired")
+arrow(x_fw+box_fw[0], y_fw+box_fw[1]//2, x_lb, y_lb+box_lb[1]//2, "TCP 443 (TLS) 🔒")
+
+# From LB down to web
+arrow(x_lb+box_lb[0]//2, y_lb+box_lb[1], x_web+box_web[0]//2, y_web, "Distributed request")
+# Web to App
+arrow(x_web+box_web[0], y_web+box_web[1]//2, x_app, y_app+box_app[1]//2, "Proxy (HTTPS) 🔒")
+# App to DB
+arrow(x_app+box_app[0], y_app+box_app[1]//2, x_db, y_db+box_db[1]//2, "SQL query")
+# Responses back
+arrow(x_db, y_db+box_db[1]//2+40, x_app+box_app[0], y_app+box_app[1]//2+40, "Results")
+arrow(x_app, y_app+box_app[1]//2+80, x_web+box_web[0], y_web+box_web[1]//2+80, "Rendered page")
+arrow(x_web+box_web[0]//2, y_web+box_web[1], x_lb+box_lb[0]//2, y_lb+box_lb[1], "HTTP response 🔒")
+arrow(x_lb, y_lb+box_lb[1]//2+60, x_fw+box_fw[0], y_fw+box_fw[1]//2+60, "Encrypted traffic 🔒")
+arrow(x_fw, y_fw+box_fw[1]//2+100, x_dns+box_dns[0], y_dns+box_dns[1]//2+100, "Firewall checks")
+arrow(x_dns, y_dns+box_dns[1]//2+140, x_user+box_user[0], y_user+box_user[1]//2+140, "Browser receives & renders")
+
+# Title
+draw.text((50, 10), "What happens when you type https://www.google.com and press Enter", font=font, fill="black")
+draw.text((50, 40), "Shows: DNS → Firewall → LB → Web → App → DB; Encrypted (TLS) paths and correct ports", font=font_small, fill="black")
+
+img_path = "/mnt/data/diagram_google_flow.png"
+img.save(img_path)
+
+# Also update/create an ANSWER file with the image URL for easy submission
+answer_path = "/mnt/data/1-what_happen_when_diagram"
+with open(answer_path, "w", encoding="utf-8") as f:
+    f.write("Diagram URL: sandbox:/mnt/data/diagram_google_flow.png\n")
+
+img_path, answer_path 

@@ -1,0 +1,58 @@
+# Let's generate a .txt file with the blog post content in English.
+blog_post = """
+What Really Happens When You Type https://www.google.com and Press Enter
+
+We all do it hundreds of times a day — type something in the browser’s address bar and hit Enter.
+But have you ever wondered what really happens, step by step, between that keystroke and the magical moment when the page appears?
+Let’s peel back the layers of the Internet and follow the request.
+
+1. DNS Request: Finding Google’s IP
+Your browser first needs to translate www.google.com into an IP address it can connect to.
+It checks in this order:
+- Browser cache
+- OS cache
+- Router cache
+- If none has the answer, it queries your configured DNS resolver (ISP or public like 8.8.8.8).
+The resolver may ask the root DNS servers, .com TLD servers, and Google’s authoritative DNS servers until it gets the final answer — an IP address.
+
+2. TCP/IP: Opening a Connection
+With the IP address, the browser initiates a TCP three-way handshake (SYN → SYN/ACK → ACK) with the server on port 443 (HTTPS).
+IP takes care of routing the packets across the Internet until they reach Google’s nearest data center.
+
+3. Firewall Checks
+At every hop (your PC, router, ISP, Google network), firewalls inspect the packets and decide whether to allow them through.
+If your corporate firewall blocks Google, the connection would fail.
+
+4. HTTPS and SSL/TLS Handshake
+Because the URL starts with https://, the browser negotiates a TLS session:
+- ClientHello / ServerHello exchange
+- Key exchange and cipher agreement
+- Browser verifies Google’s SSL certificate (issued by a trusted CA)
+When done, all communication is encrypted and secure.
+
+5. Load Balancer: Choosing a Server
+Google uses many servers. The IP address may point to a virtual IP behind a load balancer.
+The load balancer chooses a healthy backend server using an algorithm (e.g., least-connections, round-robin).
+
+6. Web Server
+The web server receives the HTTP request. It may directly serve static files or pass the request to the application server for dynamic content.
+
+7. Application Server
+The application server runs Google’s code to process your search query, talk to databases, and prepare the response.
+
+8. Database
+The database stores the search index and other data. It is queried to get the results that match your search.
+
+9. Response and Rendering
+The web server sends back an HTTP response with status 200 OK and the HTML page.
+Your browser decrypts the response, parses the DOM, downloads any extra assets (CSS, JS, images), and renders the final page you see.
+
+Summary
+You type URL → DNS finds IP → TCP handshake → TLS handshake → LB picks a server → Web server receives → App server executes → DB queried → Response sent → Browser renders.
+"""
+
+file_path = "/mnt/data/what_happens_when_google.txt"
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(blog_post)
+
+file_path
